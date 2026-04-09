@@ -2,93 +2,128 @@ import streamlit as st
 import yt_dlp
 import os
 
-# إعدادات الصفحة
-st.set_page_config(page_title="KHARYOUSH PRO", page_icon="🎥", layout="centered")
+# إعدادات الصفحة والجمالية
+st.set_page_config(page_title="KHARYOUSH PRO", page_icon="🔮", layout="centered")
 
-# تنسيق الواجهة
+# CSS لتصميم بنفسجي عصري ولامع (Glassmorphism)
 st.markdown("""
     <style>
-    .main-title { color: #FF0000; text-align: center; font-size: 45px; font-weight: bold; font-family: 'Arial'; }
-    .stButton>button { width: 100%; border-radius: 15px; background-color: #FF0000; color: white; font-weight: bold; }
-    .video-info { background-color: #f0f2f6; padding: 20px; border-radius: 15px; margin-bottom: 20px; direction: rtl; }
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+    
+    html, body, [data-testid="stAppViewContainer"] {
+        background: linear-gradient(135deg, #1a0b2e 0%, #3d1a6d 100%);
+        font-family: 'Tajawal', sans-serif;
+        color: #ffffff;
+    }
+    
+    .main-title {
+        font-size: 55px;
+        font-weight: 800;
+        text-align: center;
+        background: linear-gradient(to right, #e0aaff, #bc98ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0px 0px 20px rgba(188, 152, 255, 0.5);
+        margin-bottom: 5px;
+    }
+    
+    .sub-title {
+        text-align: center;
+        color: #e0aaff;
+        font-size: 16px;
+        margin-bottom: 40px;
+        letter-spacing: 2px;
+    }
+
+    /* تنسيق الحقول */
+    .stTextInput>div>div>input {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: white;
+        border: 1px solid #bc98ff;
+        border-radius: 12px;
+        padding: 15px;
+    }
+
+    /* الزر اللامع */
+    .stButton>button {
+        width: 100%;
+        background: linear-gradient(90deg, #7b2cbf, #9d4edd);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: bold;
+        padding: 20px;
+        transition: 0.3s;
+        box-shadow: 0px 0px 15px rgba(157, 78, 221, 0.4);
+    }
+    
+    .stButton>button:hover {
+        box-shadow: 0px 0px 25px rgba(157, 78, 221, 0.8);
+        transform: translateY(-2px);
+    }
+
+    /* إخفاء العناصر غير الضرورية */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     </style>
+    
     <div class="main-title">KHARYOUSH PRO</div>
-    <p style='text-align:center;'>المحرك الذكي لتحميل الوسائط</p>
+    <div class="sub-title">THE INTELLIGENT MEDIA ENGINE</div>
     """, unsafe_allow_html=True)
 
-# مدخل الرابط
-url = st.text_input("أدخل رابط الفيديو هنا:", placeholder="https://www.youtube.com/watch?v=...")
+# المدخلات
+url = st.text_input("", placeholder="صق رابط الفيديو هنا...")
 
 if url:
     try:
-        with st.spinner('جاري جلب معلومات الفيديو...'):
-            # إعدادات جلب المعلومات فقط بدون تحميل
-            ydl_opts_info = {'quiet': True, 'noplaylist': True}
+        # إعدادات تخطي الحظر والجودة
+        ydl_opts_info = {
+            'quiet': True, 
+            'noplaylist': True,
+            'extractor_args': {'youtube': {'player_client': ['android', 'web']}} 
+        }
+        
+        with st.container():
             with yt_dlp.YoutubeDL(ydl_opts_info) as ydl:
                 info = ydl.extract_info(url, download=False)
                 
-                # عرض معلومات الفيديو بشكل أنيق
-                st.markdown(f"""
-                <div class="video-info">
-                    <h4>📺 {info.get('title')}</h4>
-                    <p>👤 <b>القناة:</b> {info.get('uploader')}</p>
-                    <p>👁️ <b>المشاهدات:</b> {info.get('view_count', 0):,}</p>
-                    <p>⏱️ <b>المدة:</b> {int(info.get('duration', 0)/60)} دقيقة</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # إظهار الصورة المصغرة
-                st.image(info.get('thumbnail'), use_column_width=True)
+                # عرض معلومات مختصرة وعصرية
+                col1, col2 = st.columns([1, 2])
+                with col1:
+                    st.image(info.get('thumbnail'), use_column_width=True)
+                with col2:
+                    st.markdown(f"**{info.get('title')[:50]}...**")
+                    st.caption(f"👤 {info.get('uploader')} | 👁️ {info.get('view_count', 0):,}")
 
-        # خيارات التحميل
-        st.markdown("---")
-        format_choice = st.selectbox("اختر صيغة التحميل:", ["فيديو (Video + Audio)", "صوت فقط (MP3)"])
+            st.markdown("---")
+            format_choice = st.selectbox("صيغة التحميل", ["Video (MP4)", "Audio (MP3)"], label_visibility="collapsed")
 
-        if st.button("بدء التحميل الآن"):
-            with st.spinner('جاري التحميل والمعالجة...'):
-                if format_choice == "صوت فقط (MP3)":
-                    ydl_opts = {
-                        'format': 'bestaudio/best',
-                        'outtmpl': 'KHARYOUSH_audio',
-                        'postprocessors': [{
-                            'key': 'FFmpegExtractAudio',
-                            'preferredcodec': 'mp3',
-                            'preferredquality': '192',
-                        }],
-                    }
-                else:
-                    ydl_opts = {
-                        'format': 'bestvideo+bestaudio/best',
-                        'outtmpl': 'KHARYOUSH_video.%(ext)s',
+            if st.button("DOWNLOAD NOW"):
+                with st.spinner('Processing...'):
+                    # إعدادات التحميل النهائية
+                    common_opts = {
+                        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
+                        'nocheckcertificate': True,
+                        'quiet': True
                     }
 
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([url])
-                    # تحديد اسم الملف النهائي
-                    if format_choice == "صوت فقط (MP3)":
-                        final_file = "KHARYOUSH_audio.mp3"
+                    if "MP3" in format_choice:
+                        ydl_opts = {**common_opts, 'format': 'bestaudio/best', 'outtmpl': 'k_audio',
+                                    'postprocessors': [{'key': 'FFmpegExtractAudio','preferredcodec': 'mp3','preferredquality': '192'}]}
+                        final_file, mime = "k_audio.mp3", "audio/mpeg"
                     else:
-                        # جلب الامتداد الصحيح للفيديو
-                        file_info = ydl.extract_info(url, download=False)
-                        ext = file_info.get('ext', 'mp4')
-                        final_file = f"KHARYOUSH_video.{ext}"
+                        ydl_opts = {**common_opts, 'format': 'best[ext=mp4]/best', 'outtmpl': 'k_video.mp4'}
+                        final_file, mime = "k_video.mp4", "video/mp4"
 
-                # زر حفظ الملف النهائي
-                with open(final_file, "rb") as f:
-                    st.download_button(
-                        label=f"💾 حفظ الـ {format_choice} على جهازك",
-                        data=f,
-                        file_name=final_file,
-                        mime="video/mp4" if "فيديو" in format_choice else "audio/mpeg"
-                    )
-                # حذف الملف من السيرفر بعد انتهاء العملية
-                if os.path.exists(final_file):
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        ydl.download([url])
+
+                    with open(final_file, "rb") as f:
+                        st.download_button(label="SAVE TO DEVICE", data=f, file_name=final_file, mime=mime)
                     os.remove(final_file)
 
     except Exception as e:
-        st.error(f"عذراً، حدث خطأ: {e}")
+        st.error(f"Error: {e}")
 
-# عداد زوار بسيط في الأسفل
-st.markdown("---")
-st.markdown("![Visitor Count](https://profile-counter.glitch.me/kharyoush/count.svg)")
-st.caption("KHARYOUSH PRO - 2026")
+st.markdown("<br><p style='text-align:center; opacity:0.5; font-size:12px;'>KHARYOUSH PRO © 2026</p>", unsafe_allow_html=True)
